@@ -1,0 +1,135 @@
+---
+description: 
+globs: *.js,*.ts
+alwaysApply: false
+---
+# Croquet Multiplayer Game Development Rules
+
+## Architecture Rules
+
+1. **Model-View Separation**
+   - Keep all game state in the Model layer
+   - Use View layer only for rendering and input handling
+   - Never modify Model state directly from View
+   - Use publish/subscribe for Model-View communication
+
+2. **State Management**
+   - All shared state must be in Model classes
+   - Use Croquet.Model.create() instead of new
+   - Initialize state in init() method, not constructor
+   - Destroy models when no longer needed
+   - Use wellKnownModel() for accessing named models (in particular, "modelRoot")
+
+3. **Event Handling**
+   - Use publish() in the view to send user input to the model
+   - Use subscribe() in the model to react to user input
+   - Keep event payloads serializable
+   - Optionally, inform view of changes by publishing from the model
+
+## Game Logic Rules
+
+1. **Deterministic Simulation**
+   - Use Model.random() for random numbers
+   - Use Model.future() for timed events
+   - Keep physics calculations in Model
+   - Avoid external state dependencies
+   - Use Constants for shared values
+
+2. **Player Management**
+   - Handle view-join/view-exit events
+   - Create player-specific models on join
+   - Clean up player state on exit
+   - Use viewId for player identification
+
+3. **Input Handling**
+   - Process input in View layer
+   - Publish input events to Model
+   - Use viewId to identify which player sent an event
+   - Implement proper input validation
+   - Handle both keyboard and touch input
+
+## Performance Rules
+
+1. **Network Optimization**
+   - Minimize publish frequency
+   - Only publish events based on user input, everything else is deterministic
+   - In particular, do not publish the result of computations
+   - Keep event payloads small
+   - Batch updates when possible
+   - Use proper event scoping
+
+2. **Rendering**
+   - Use proper interpolation
+   - Implement view-side smoothing to decouple simulation timing from animation
+   - Handle view-side animations
+   - Clean up resources on detach()
+
+3. **Memory Management**
+   - Keep model snapshot sizes small
+   - Unchanging state should not be in the model
+   - Destroy unused models
+   - Detach unused views
+   - Clean up event listeners
+   - Handle resource disposal
+   - Monitor memory usage
+
+## Code Organization Rules
+
+1. **Class Structure**
+   - Extend Croquet.Model for game logic
+   - Extend Croquet.View for rendering
+   - Use proper class registration for models
+   - Implement proper definitions to serialize non-model classes
+   - Follow Croquet naming conventions
+
+2. **File Organization**
+   - Separate Model and View code
+   - Group related functionality
+   - Use proper module imports
+   - Maintain clear dependencies
+   - Document public interfaces
+
+3. **Error Handling**
+   - Handle network disconnections by properly detaching views
+   - On reconnect a new View will be constructed
+
+## Deployment Rules
+
+1. **Session Management**
+   - Use proper API keys
+   - Implement proper session creation
+   - Handle session joining
+   - Manage session cleanup
+   - Implement proper error handling
+
+2. **Security**
+   - Validate all inputs, both in View before publishing, and in Model before acting on them
+   - Sanitize user data, both in View before publishing, and in Model before acting on them
+   - Implement rate limiting in View
+
+3. **Deployment**
+   - Can be deployed as static web page
+   - Only needs a web server
+   - No application server needed
+
+## Best Practices
+
+1. **Code Quality**
+   - Use TypeScript for type safety
+   - Use `context/croquet-types.d.ts` for type checking Croquet code
+   - Follow consistent coding style
+   - Document complex logic
+   - Use proper error handling
+   - Maintain clean code
+
+2. **User Experience**
+   - Implement proper loading states
+   - Design around network latency
+   - Provide proper feedback
+   - Implement proper recovery
+   - Maintain smooth gameplay
+
+3. **Maintenance**
+   - Keep dependencies updated
+   - Monitor performance
+   - Maintain documentation
