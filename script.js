@@ -75,9 +75,10 @@ class SharedSimulation extends Croquet.Model {
     }
 
     // this is called when a new player joins the session
-    onViewJoin(viewId) {
+    onViewJoin({viewId, viewData}) {
         // create a new car model for the player
-        const car = SimCar.create(viewId);
+        const { color } = viewData;
+        const car = SimCar.create({viewId, color}); // create can only take a single argument
         // store the car model in a map so we can look it up by the player's view ID
         this.cars.set(viewId, car);
         // Inform the view that a new car has been added
@@ -87,12 +88,12 @@ class SharedSimulation extends Croquet.Model {
     }
 
     // this is called when a player leaves the session
-    onViewExit(viewId) {
+    onViewExit({viewId}) {
         // get the car model for the player
         const car = this.cars.get(viewId);
         // remove the car model from the map
         this.cars.delete(viewId);
-        // destroy the car model
+        // unregister the car model
         car.destroy();
         // Inform the view that a car has been removed
         // Again, this is not strictly necessary, but more efficient than
@@ -129,14 +130,16 @@ class SharedSimulation extends Croquet.Model {
     createMountains(count) {
         const mountains = [];
         for (let i = 0; i < count; i++) {
-            // We use the shared random number generator to ensure that all clients
-            // get the same sequence of random numbers. It's automatically seeded
-            // with the session ID, so different sessions will get different sequences.
-            const height = this.random() * 30 + 10;
-            const radius = this.random() * 10 + 5;
+            // Croquet patches Math.random() to ensure that if it is called from
+            // model code, all clients in that session get the same sequence of
+            // random numbers. It's automatically seeded with the session ID, so
+            // different sessions will get different sequences. This makes it
+            // safe to use Math.random() in model code.
+            const height = Math.random() * 30 + 10;
+            const radius = Math.random() * 10 + 5;
             const position = {
-                x: (this.random() - 0.5) * 180, // Spread them out
-                z: (this.random() - 0.5) * 180,
+                x: (Math.random() - 0.5) * 180, // Spread them out
+                z: (Math.random() - 0.5) * 180,
                 y: height / 2, // Base on the ground plane
             };
             // Ensure mountains are far from the central road area
@@ -150,9 +153,9 @@ class SharedSimulation extends Croquet.Model {
     createTrees(count) {
         const trees = [];
         for (let i = 0; i < count; i++) {
-            const trunkHeight = this.random() * 3 + 1;
+            const trunkHeight = Math.random() * 3 + 1;
             const trunkRadius = trunkHeight * 0.1;
-            const leavesHeight = this.random() * 4 + 2;
+            const leavesHeight = Math.random() * 4 + 2;
             const leavesRadius = leavesHeight * 0.4;
             // Position the tree randomly, avoiding the road
             const tree = {
@@ -165,8 +168,8 @@ class SharedSimulation extends Croquet.Model {
                     radius: leavesRadius,
                 },
                 position: {
-                    x: (this.random() - 0.5) * 150,
-                    z: (this.random() - 0.5) * 150,
+                    x: (Math.random() - 0.5) * 150,
+                    z: (Math.random() - 0.5) * 150,
                     y: 0,
                 },
             };
@@ -183,23 +186,23 @@ class SharedSimulation extends Croquet.Model {
     createClouds(count) {
         const clouds = [];
         for (let i = 0; i < count; i++) {
-            const numSpheres = Math.floor(this.random() * 5) + 3; // 3 to 7 spheres per cloud
+            const numSpheres = Math.floor(Math.random() * 5) + 3; // 3 to 7 spheres per cloud
             const spheres = [];
             for (let j = 0; j < numSpheres; j++) {
-                const radius = this.random() * 5 + 2;
+                const radius = Math.random() * 5 + 2;
                 // Offset spheres slightly to form cloud shape
                 const position = {
-                    x: (this.random() - 0.5) * 10,
-                    z: (this.random() - 0.5) * 5,
-                    y: (this.random() - 0.5) * 3,
+                    x: (Math.random() - 0.5) * 10,
+                    z: (Math.random() - 0.5) * 5,
+                    y: (Math.random() - 0.5) * 3,
                 };
                 spheres.push({ radius, position });
             }
             // Position the cloud group high up and spread out
             const position = {
-                x: (this.random() - 0.5) * 180,
-                z: (this.random() - 0.5) * 180,
-                y: this.random() * 20 + 30, // Height range
+                x: (Math.random() - 0.5) * 180,
+                z: (Math.random() - 0.5) * 180,
+                y: Math.random() * 20 + 30, // Height range
             };
             clouds.push({ spheres, position });
         }
@@ -213,16 +216,19 @@ SharedSimulation.register("SharedSimulation");
 class SimCar extends Croquet.Model {
     // each player's view has a viewId property, which we use to identify
     // the player controlling the car
-    init(viewId) {
+    init({viewId, color}) {
+        // log car creation in the console, mark it with the simulation time
+        console.log(`${this.now()}: SimCar ${this.id} created for viewId ${viewId}`);
+
         // this is in addition to the `id` property every model already has
         this.viewId = viewId;
-        // each car has a random color
-        this.color = `hsl(${this.random() * 360}, 100%, 50%)`;
+        // the color was passed from the view as part of the viewData
+        this.color = color;
         // each car has a slightly random position so they don't all
         // spawn in the exact same place
         this.pos = {
-            x: this.random() * 4 - 2,
-            z: this.random() * 4 - 2,
+            x: Math.random() * 4 - 2,
+            z: Math.random() * 4 - 2,
             y: 0.2,
         };
         // all cars facing forward
@@ -234,8 +240,8 @@ class SimCar extends Croquet.Model {
             left: false,
             right: false
         };
-        // Subscribe to control events only from "our" player
-        this.subscribe(viewId, "control", this.onControl);
+        // Every model has a built-in id, which "our" player will use as scope to send events
+        this.subscribe(this.id, "control", this.onControl);
     }
 
     // this event is published when the player presses a button
@@ -279,6 +285,17 @@ class SimCar extends Croquet.Model {
                 // or show a visual effect
             }
         }
+    }
+
+    destroy() {
+        // we only intercept destroy() for logging purposes
+
+        // log car destruction in the console, mark it with the simulation time
+        console.log(`${this.now()}: SimCar ${this.id} destroyed`);
+
+        // this unregisters the model, unsubscribes it from all events, and
+        // cancels all its future messages (if any)
+        super.destroy();
     }
 
     // we could also use Three.js math here, but would have to define the
@@ -386,6 +403,8 @@ class SimInterface extends Croquet.View {
         }
 
         // get the car we control based on our viewId
+        // this.mySimCar.id is different from this.viewId
+        // it is used as scope for publishing events to that model
         this.mySimCar = sim.cars.get(this.viewId);
 
         // When a new player's car is added, we add a new 3D object to our scene
@@ -401,9 +420,12 @@ class SimInterface extends Croquet.View {
     }
 
     // this is called when the session is interrupted
+    // we need to manually release all resources this class created
+    // (e.g. the renderer, unsubscribe from DOM events, etc.)
+    // because on reconnect, the whole view will be recreated
     detach() {
         this.renderer.dispose();
-        super.detach();
+        super.detach(); // this will unsubscribe from all Croquet events
     }
 
     // this is called both in the constructor and when a new player's car is added
@@ -683,7 +705,8 @@ const myControls = {
         this[control] = value;
         const { view } = ThisSession;
         if (view) {
-            view.publish(view.viewId, "control", { control, value });
+            const myCarId = view.mySimCar.id;
+            view.publish(myCarId, "control", { control, value });
         }
     }
 };
@@ -765,11 +788,19 @@ Croquet.App.makeWidgetDock();
 // The Multisynq API key here is a placeholder that will work on the local network
 // but not on the public internet. Before deploying your own game, please create
 // your own API key at multisynq.io/coder and use that instead.
+
+const myColor =`hsl(${Math.random() * 360}, 100%, 50%)`; // Random color for each player
 const ThisSession = await Croquet.Session.join({
     apiKey: "234567_Paste_Your_Own_API_Key_Here_7654321",
     appId: "io.croquet.threejs",
-    model: SharedSimulation,
-    view: SimInterface,
+    model: SharedSimulation,    // the root model class
+    view: SimInterface,         // the view class
+    // viewData is passed as argument to the model's view-join event
+    // along with the randomly generated viewId (which cannot be changed)
+    viewData: {
+        color: myColor,
+        // we could pass a player name here etc.
+    },
 });
 
 // start listening for user input
