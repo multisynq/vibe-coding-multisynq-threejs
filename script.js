@@ -1,9 +1,9 @@
 import * as THREE from "three";
-import * as Croquet from "@croquet/croquet";
+import * as Multisynq from "@multisynq/client";
 
-// We use Three.js for 3D graphics and Croquet for multiplayer logic
+// We use Three.js for 3D graphics and Multisynq for multiplayer logic
 
-// Croquet works by splitting the code into model and view:
+// Multisynq works by splitting the code into model and view:
 // * The model is the shared simulation state.
 // * The view is the interface between the simulation and the local client.
 
@@ -19,16 +19,16 @@ import * as Croquet from "@croquet/croquet";
 // be sent from the server to the clients. Instead, you can run e.g. physics
 // or NPC code in the model, and it will be exactly the same for all clients.
 
-// All constants used in the simulation must be defined as Croquet.Constants
+// All constants used in the simulation must be defined as Multisynq.Constants
 // so that they get hashed into the session ID, ensuring that all clients
 // in the same session use the same constants
-const C = Croquet.Constants;
+const C = Multisynq.Constants;
 C.carSpeed = 0.15;
 C.turnSpeed = 0.05;
 C.trainSpeed = 0.01;
 C.trainRadius = 30;
 
-// Any Croquet app must be split into model and view.
+// Any Multisynq app must be split into model and view.
 // The model is the shared simulation state.
 // The view is the interface between the simulation and the local client.
 
@@ -37,13 +37,13 @@ C.trainRadius = 30;
 // This is to ensure that all clients have the same simulation state.
 
 // Additionally, all code executed in the model must be identical on all
-// clients. Croquet ensures that by hashing the model code into the session ID.
+// clients. Multisynq ensures that by hashing the model code into the session ID.
 // If the model uses any external code, it must be added to Constants
 // to get hashed, too. For external libraries, it's ususally sufficient
 // to add their version number to Constants so if two clients have different
 // versions of the same library, they will be in different sessions.
 
-class SharedSimulation extends Croquet.Model {
+class SharedSimulation extends Multisynq.Model {
     // Models are initialized with "init" instead of "constructor",
     // and created with "Class.create" instead of "new Class".
     // That's because when new clients join the session, models are
@@ -53,7 +53,7 @@ class SharedSimulation extends Croquet.Model {
     // you don't need to do anything special.
     init() {
         // Generate mountains, trees, and clouds.
-        // This uses Croquet's shared random number generator.
+        // This uses Multisynq's shared random number generator.
         this.mountains = this.createMountains(15);
         this.trees = this.createTrees(50);
         this.clouds = this.createClouds(20);
@@ -130,7 +130,7 @@ class SharedSimulation extends Croquet.Model {
     createMountains(count) {
         const mountains = [];
         for (let i = 0; i < count; i++) {
-            // Croquet patches Math.random() to ensure that if it is called from
+            // Multisynq patches Math.random() to ensure that if it is called from
             // model code, all clients in that session get the same sequence of
             // random numbers. It's automatically seeded with the session ID, so
             // different sessions will get different sequences. This makes it
@@ -213,7 +213,7 @@ SharedSimulation.register("SharedSimulation");
 
 
 // a new SimCar model is created for each player joining the session
-class SimCar extends Croquet.Model {
+class SimCar extends Multisynq.Model {
     // each player's view has a viewId property, which we use to identify
     // the player controlling the car
     init({viewId, color}) {
@@ -309,12 +309,12 @@ class SimCar extends Croquet.Model {
 }
 SimCar.register("SimCar");
 
-// We use a Croquet View as the Interface between shared simulation and local
+// We use a Multisynq View as the Interface between shared simulation and local
 // Three.js scene. We can read state directly from the simulation model, but
 // must not modify it. Any manipulation of the simulation state must be via
 // `publish` operations to ensure it stays synchronized across all clients
 
-class SimInterface extends Croquet.View {
+class SimInterface extends Multisynq.View {
     constructor(sim) {
         super(sim);
         // This is a direct reference to the simulation model.
@@ -425,7 +425,7 @@ class SimInterface extends Croquet.View {
     // because on reconnect, the whole view will be recreated
     detach() {
         this.renderer.dispose();
-        super.detach(); // this will unsubscribe from all Croquet events
+        super.detach(); // this will unsubscribe from all Multisynq events
     }
 
     // this is called both in the constructor and when a new player's car is added
@@ -443,7 +443,7 @@ class SimInterface extends Croquet.View {
         }
     }
 
-    // this is called by Croquet in every frame (driven by requestAnimationFrame)
+    // this is called by Multisynq in every frame (driven by requestAnimationFrame)
     update(_time) {
         this.updateTrain(this.sim.trainAngle);
         this.updateCars(this.carObjects, this.sim.cars);
@@ -781,7 +781,7 @@ function setupControls() {
 
 // The widget dock shows the QR code for the session
 // URL so other players can join easily
-Croquet.App.makeWidgetDock();
+Multisynq.App.makeWidgetDock();
 
 // This is the main entry point for the application
 // it joins the session, resumes the simulation, and attaches the view to it
@@ -790,9 +790,9 @@ Croquet.App.makeWidgetDock();
 // your own API key at multisynq.io/coder and use that instead.
 
 const myColor =`hsl(${Math.random() * 360}, 100%, 50%)`; // Random color for each player
-const ThisSession = await Croquet.Session.join({
+const ThisSession = await Multisynq.Session.join({
     apiKey: "234567_Paste_Your_Own_API_Key_Here_7654321",
-    appId: "io.croquet.threejs",
+    appId: "io.multisynq.threejs",
     model: SharedSimulation,    // the root model class
     view: SimInterface,         // the view class
     // viewData is passed as argument to the model's view-join event

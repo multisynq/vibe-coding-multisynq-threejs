@@ -8,7 +8,7 @@ In this example, we combine Multisynq for multiplayer capabilities and Three.js 
 
 ## Key Technologies
 
-- **Croquet 2.0 Library**: Utilizes the Multisynq DePIN network for multiplayer synchronization, allowing the "server logic" to run on identical VMs in each client. This ensures all clients remain in sync without explicit state synchronization.
+- **Multisynq Client**: Utilizes the Multisynq DePIN network for multiplayer synchronization, allowing the "server logic" to run on identical VMs in each client. This ensures all clients remain in sync without explicit state synchronization.
 
 - **Three.js**: Provides the 3D rendering capabilities, enabling the creation of visually engaging environments.
 
@@ -22,8 +22,7 @@ To explore vibe-coding with this example, clone the repository and launch the in
 
 ## Resources
 
-- [Croquet 2.0 Documentation](https://multisynq.io/docs/croquet)
-- [Croquet GitHub Repository](https://github.com/croquet/croquet)
+- [Multisynq Client Documentation](https://multisynq.io/docs/client)
 - [Three.js Documentation](https://threejs.org/docs/)
 
 This project showcases the potential of vibe-coding in creating innovative and engaging multiplayer experiences. Explore the code and see how you can apply vibe-coding principles to your own projects.

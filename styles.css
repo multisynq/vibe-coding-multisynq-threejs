@@ -48,7 +48,7 @@ body {
   }
 }
 
-/* move Croquet QR code to top-right (it's normally in the bottom-left) */
+/* move Multisynq QR code to top-right (it's normally in the bottom-left) */
 #croquet_dock {
   top: 10px;
   right: 10px;

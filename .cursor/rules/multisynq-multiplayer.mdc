@@ -1,9 +1,9 @@
 ---
-description: 
+description:
 globs: *.js,*.ts
 alwaysApply: false
 ---
-# Croquet Multiplayer Game Development Rules
+# Multisynq Multiplayer Game Development Rules
 
 ## Architecture Rules
 
@@ -15,7 +15,7 @@ alwaysApply: false
 
 2. **State Management**
    - All shared state must be in Model classes
-   - Use Croquet.Model.create() instead of new
+   - Use Multisynq.Model.create() instead of new
    - Initialize state in init() method, not constructor
    - Destroy models when no longer needed
    - Use wellKnownModel() for accessing named models (in particular, "modelRoot")
@@ -76,11 +76,11 @@ alwaysApply: false
 ## Code Organization Rules
 
 1. **Class Structure**
-   - Extend Croquet.Model for game logic
-   - Extend Croquet.View for rendering
+   - Extend Multisynq.Model for game logic
+   - Extend Multisynq.View for rendering
    - Use proper class registration for models
    - Implement proper definitions to serialize non-model classes
-   - Follow Croquet naming conventions
+   - Follow Multisynq naming conventions
 
 2. **File Organization**
    - Separate Model and View code
@@ -116,7 +116,7 @@ alwaysApply: false
 
 1. **Code Quality**
    - Use TypeScript for type safety
-   - Use `context/croquet-types.d.ts` for type checking Croquet code
+   - Use `context/multisynq-client.d.ts` for type checking Multisynq code
    - Follow consistent coding style
    - Document complex logic
    - Use proper error handling
